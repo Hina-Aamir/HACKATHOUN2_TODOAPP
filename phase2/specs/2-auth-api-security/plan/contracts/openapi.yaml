@@ -1,0 +1,271 @@
+openapi: 3.0.3
+info:
+  title: Todo Backend API with Authentication
+  description: Secured REST API for managing user tasks in the Todo application with JWT authentication
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+security:
+  - bearerAuth: []
+paths:
+  /api/{user_id}/tasks:
+    get:
+      summary: Get all tasks for an authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user whose tasks to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of tasks for the authenticated user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id
+        '500':
+          description: Internal server error
+    post:
+      summary: Create a new task for an authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user creating the task
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id
+        '500':
+          description: Internal server error
+  /api/{user_id}/tasks/{id}:
+    get:
+      summary: Get a specific task for an authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id or task
+        '404':
+          description: Task not found
+        '500':
+          description: Internal server error
+    put:
+      summary: Update a specific task for an authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to update
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id or task
+        '404':
+          description: Task not found
+        '500':
+          description: Internal server error
+    delete:
+      summary: Delete a specific task for an authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to delete
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task deleted successfully
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id or task
+        '404':
+          description: Task not found
+        '500':
+          description: Internal server error
+  /api/{user_id}/tasks/{id}/complete:
+    patch:
+      summary: Toggle completion status of a task for an authenticated user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          description: The ID of the task to update
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                completed:
+                  type: boolean
+                  description: The new completion status
+              required:
+                - completed
+      responses:
+        '200':
+          description: Task completion status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id or task
+        '404':
+          description: Task not found
+        '500':
+          description: Internal server error
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the task
+        title:
+          type: string
+          description: Brief title of the task
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed description of the task
+        completed:
+          type: boolean
+          description: Indicates whether the task is completed
+        user_id:
+          type: string
+          description: Identifier of the user who owns this task
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the task was created
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the task was last updated
+      required:
+        - id
+        - title
+        - completed
+        - user_id
+        - created_at
+        - updated_at
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Brief title of the task
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed description of the task
+      required:
+        - title
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Brief title of the task
+          maxLength: 255
+        description:
+          type: string
+          description: Detailed description of the task
+      required:
+        - title
